@@ -9,7 +9,7 @@ class World {
         this.context.proxyUrl = 'http://localhost:5002/haalcentraal/api'
 
         this.context.gezagDataPath = './test-data/GezagMock/test-data.json';
-        this.context.logFileToAssert = './test-data/logs/brp-autorisatie-protocollering.json';
+        this.context.logFileToAssert = './test-data/logs/brp-proxy.json';
         this.context.downstreamApiDataPath = './test-data/DownstreamApi';
 
         this.context.sql = {
@@ -17,17 +17,17 @@ class World {
             cleanup: true,
             deleteIndividualRecords: true,
             poolConfig: {
-                user: 'root',
-                host: 'localhost',
+                user: '',
+                host: '',
                 database: 'rvig_haalcentraal_testdata',
-                password: 'root',
+                password: '',
                 port: 5432,
                 allowExitOnIdle: true
             }
         };
 
         this.context.oAuth = {
-            enable: false,
+            enable: true,
             accessTokenUrl: 'http://identityserver:6000/connect/token',
             clients:[
                 {
