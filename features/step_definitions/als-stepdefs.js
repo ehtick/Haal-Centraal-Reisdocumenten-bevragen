@@ -1,19 +1,11 @@
 const { When } = require('@cucumber/cucumber');
 const fs = require('fs');
 const { executeSqlStatements } = require('./postgresqlHelpers');
+const { execute } = require('./postgresqlHelpers-2');
+const { generateSqlStatementsFrom } = require('./sqlStatementsFactory');
+
 const { addDefaultAutorisatieSettings,
         handleRequest } = require('./requestHelpers');
-
-const apiEndpointPrefixMap = new Map([
-    ['bewoningen', 'bewoning'],
-    ['personen', 'brp'],
-    ['reisdocumenten', 'reisdocumenten'],
-    ['verblijfplaatshistorie', 'brphistorie'],
-    // niet bestaande endpoints
-    ['ingezetenen', 'brp'],
-    ['paspoorten', 'reisdocumenten'],
-    ['verblijfhistorie', 'brphistorie']
-]);
 
 When(/^([a-zA-Z-]*) wordt gezocht met de volgende parameters$/, async function (endpoint, dataTable) {
     if(this.context.afnemerID === undefined) {
@@ -38,9 +30,18 @@ When(/^([a-zA-Z-]*) wordt gezocht met de volgende parameters$/, async function (
     }
     addDefaultAutorisatieSettings(this.context, this.context.afnemerID);
 
-    await executeSqlStatements(this.context.sql, this.context.sqlData, global.pool);
+    if(this.context.data) {
+        await execute(generateSqlStatementsFrom(this.context.data));
+    }
+    else {
+        await executeSqlStatements(this.context.sql, this.context.sqlData, global.pool);
+    }
 
-    await handleRequest(this.context, `${apiEndpointPrefixMap.get(endpoint)}/${endpoint}`, dataTable);
+    const relativeUrl = this.context.apiEndpointPrefixMap.has(endpoint)
+        ? `${this.context.apiEndpointPrefixMap.get(endpoint)}/${endpoint}`
+        : '';
+
+    await handleRequest(this.context, relativeUrl, dataTable);
 });
 
 When(/^([a-zA-Z-]*) wordt gezocht met een '(\w*)' aanroep$/, async function (endpoint, httpMethod) {
@@ -48,5 +49,9 @@ When(/^([a-zA-Z-]*) wordt gezocht met een '(\w*)' aanroep$/, async function (end
         this.context.afnemerID = this.context.oAuth.clients[0].afnemerID;
     }
 
-    await handleRequest(this.context, `${apiEndpointPrefixMap.get(endpoint)}/${endpoint}`, undefined, httpMethod);
+    const relativeUrl = this.context.apiEndpointPrefixMap.has(endpoint)
+        ? `${this.context.apiEndpointPrefixMap.get(endpoint)}/${endpoint}`
+        : '';
+
+    await handleRequest(this.context, relativeUrl, undefined, httpMethod);
 });
